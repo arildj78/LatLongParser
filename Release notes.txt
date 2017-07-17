@@ -1,0 +1,29 @@
+----------------------------------------
+|     LatLongParser Release notes      |
+----------------------------------------
+
+
+Implementation differences
+----------------------------------------
+[x] Implemented
+[ ] Not implemented 
+[-] Not applicable
+
+NIL
+
+
+
+
+Changes in v0.2
+----------------------------------------
+Python and VBA implementations equalized and split into two orphan branches.
+
+VBA Branch
+---------------
+FindNumbers()
+    Added Optional parameter LatLon. This will return "Lat", "Lon" or "Unk"
+    depending on ['N','S','E','W',' '] in input
+
+Python Branch
+---------------
+No additions
