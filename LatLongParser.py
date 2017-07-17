@@ -1,5 +1,5 @@
 #--------------------------------------------------------------------------
-#   LatLongParser v0.1.1
+#   LatLongParser v0.2
 #--------------------------------------------------------------------------
 #   Copyright (C) 2017  Arild M Johannessen
 #
@@ -15,7 +15,7 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 #--------------------------------------------------------------------------
 
-#-Line added for testing of commit- (v0.1.1)
+
 
 def ParseLat(inn):
 #Dim CountIntegers As Integer
@@ -34,7 +34,8 @@ def ParseLat(inn):
     LatLon = result[4]
 
 
-    if CountIntegers == 1: #D
+    
+if CountIntegers == 1:       #D
         dd = int(Integers) + Decimals
     elif CountIntegers == 2: #DD
         dd = int(Integers) + Decimals
@@ -97,49 +98,42 @@ def ParseLon(inn):
         ss = int(Integers[-2:]) + Decimals
     else:
         raise ValueError("Invalid number format")    
-    
-    
+
+
     result = Sign * (dd + mm / 60 + ss / 3600)
     return result
 
-def FindNumbers(Text):  # Return is Parameters are [CountIntegers, Integers, Decimals, Sign]
+def FindNumbers(Text):  # Return parameters are [CountIntegers, Integers, Decimals, Sign, LatLon]
 #Dim innShort As String
-#Dim countDecimals As Integer
 #Dim startNumerals As Integer
 #Dim endNumerals As Integer
 #Dim endDecimals As Integer
 #Dim decimalPoint As Integer
 #Dim n As Integer
 #Dim c As String
+#Dim countDecimals As Integer
 #Dim hemisphere As Integer
 
     #Init variables
+    countDecimals = 0
+    hemisphere = 0
     CountIntegers = 0
     Integers = ""
     Decimals = 0.0
     Sign = 0
-    countDecimals = 0
-    hemisphere = 0
-    #CountIntegers = Parameters[0]
-    #Integers = Parameters[1]
-    #Decimals = Parameters[2]
-    #Sign = Parameters[3]
 
-    
-    innShort = Text.replace(" ", "")
-    
-    #innShort = Replace(Text, "º", "")
-    #innShort = Replace(innShort, "°", "")
-    #innShort = Replace(innShort, """", "")
-    #innShort = Replace(innShort, "'", "")
-    #innShort = Replace(innShort, " ", "")
+    innShort = Text.replace(" ", "")        #0x20
+    innShort = innShort.replace("º", "")    #0xBA
+    innShort = innShort.replace("°", "")    #0xB0
+    innShort = innShort.replace("""", "")   #0x22
+    innShort = innShort.replace("'", "")    #0x27
 
-    
+
     startNumerals = -1
     endNumerals = -1
     decimalPoint = -1
     endDecimals = -1
-    
+
     #----------------------
     #Find numerals
     #----------------------
@@ -151,39 +145,42 @@ def FindNumbers(Text):  # Return is Parameters are [CountIntegers, Integers, Dec
             CountIntegers = CountIntegers + 1
             continue
 
-        
+
         if c == "," or c == "." :
             decimalPoint = n
             continue
 
-       
+
         if (decimalPoint != -1) and c.isdigit():
             endDecimals = n
             countDecimals = countDecimals + 1
             continue
 
-        
-    
-    
-    #End if no decimals after decimalpoint
+
+
+
+
+#End if no decimals after decimalpoint
     if countDecimals == 0 and decimalPoint != -1 : raise ValueError("No numbers after decimalpoint")
     
     #End if no numerals
     if startNumerals == -1 :raise ValueError("No numbers found")
-    
-    
+
+
     #----------------------
     #Find Hemisphere
     #----------------------
     if startNumerals > 0:
         c = innShort[startNumerals - 1].upper()
+
         if c == "N" or c == "S" or c == "-" or c == "E" or c == "W" :
         #Found hemisphere in front of numerals
             if c == "S" or c == "-" or c == "W" :
                 hemisphere = -1
             else:
                 hemisphere = 1
-            
+
+
             if c == "N" or c == "S":
                 LatLon = "Lat"
             elif c == "E" or c == "W":
@@ -205,10 +202,12 @@ def FindNumbers(Text):  # Return is Parameters are [CountIntegers, Integers, Dec
                 else:
                     hemisphere = 1
 
+
                 if c == "N" or c == "S":
                     LatLon = "Lat"
                 elif c == "E" or c == "W":
                     LatLon = "Lon"
+
 
 
 
@@ -225,7 +224,6 @@ def FindNumbers(Text):  # Return is Parameters are [CountIntegers, Integers, Dec
         Decimals = float("0." + innShort[decimalPoint + 1 : decimalPoint + 1 + countDecimals])
     
     Sign = hemisphere
-    
     return [CountIntegers, Integers, Decimals, Sign, LatLon]
     
 
@@ -305,38 +303,30 @@ def DDMM(inn, ResultType, Decimals, lat):
     elif not lat and not Neg: Direction = "E"
     elif not lat and     Neg: Direction = "W"
 
-    IntDigits=2                                      #00    Initialize variable and set result as two digits, padded with zero
-    if               ResultType == 0 : IntDigits = 1 #0     decimal degrees (lat or long) with leading zeros disabled
-    elif not lat and ResultType == 1 : IntDigits = 3 #000   if decimal longitude, use three digits
-
     if lat: formatString1 = "02.0f" #00
     else  : formatString1 = "03.0f" #000
     
-    #if lat: formatString1 = "0f2" #00
-    #else  : formatString1 = "0f3" #000
 
-    #if   Decimals == -1 : formatString2 = "02.0f" #"00"
-    #elif Decimals ==  0 : formatString2 = "02.0f" #"00"
-    #elif Decimals ==  1 : formatString2 = "04.1f" #"00.0"
-    #elif Decimals ==  2 : formatString2 = "05.2f" #"00.00"
-    #elif Decimals ==  3 : formatString2 = "06.3f" #"00.000"
-    #elif Decimals ==  4 : formatString2 = "07.4f" #"00.0000"
-    #elif Decimals ==  5 : formatString2 = "08.5f" #"00.00000"
-    #elif Decimals ==  6 : formatString2 = "09.6f" #"00.000000"
-    #else:                 formatString2 = "09.6f" #"00.000000"
-
-
-
-    #if    ResultType == 0            : formatString2 = Mid(formatString2, 2, Len(formatString2) - 1) #Remove leading zero
-    #elif  ResultType == 1 and not lat: formatString2 = "0" + formatString2           #if longitude, include three zeros
-    #No Change in formatstring if Resulttype > 1
+    IntDigits=2                                      #00    Initialize variable and set result as two digits, padded with zero.
+    if               ResultType == 0 : IntDigits = 1 #0     Decimal degrees (lat or long) with leading zeros disabled.
+    elif not lat and ResultType == 1 : IntDigits = 3 #000   If decimal longitude, use three digits
 
     if Decimals > 0: formatString2 = "0{0}.{1}f".format(IntDigits + 1 + Decimals, Decimals)  #"Create string to format result"
     else           : formatString2 = "0{0}.{1}f".format(IntDigits               , 0       )  #"Create string to format result"
 
 
+
+
+
+
     
-#Output the result as double or string
+
+
+
+
+
+
+    #Output the result as double or string
     if ReturnDouble:
         #Return a double rounded to the precision given as a combination of decimalpoints and resulttype
         result = multiplier * (dd + mm / 60.0 + ss / 3600.0)
@@ -355,6 +345,11 @@ def DDMM(inn, ResultType, Decimals, lat):
 
 
     return result
+
+
+
+
+
 
 #-----------------------------------
 # LatLongParser END
