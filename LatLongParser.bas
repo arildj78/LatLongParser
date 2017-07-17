@@ -351,6 +351,6 @@ Function Max(i1 As Integer, i2 As Integer) As Integer
 End Function
 
 
-#-----------------------------------
-# LatLongParser END
-#-----------------------------------
+'-----------------------------------
+' LatLongParser END
+'-----------------------------------
