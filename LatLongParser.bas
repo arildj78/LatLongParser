@@ -1,3 +1,6 @@
+'--------------------------------------------------------------------------
+'   LatLongParser v0.2
+'--------------------------------------------------------------------------
 '   Copyright (C) 2017  Arild M Johannessen
 '
 '   This program is free software: you can redistribute it and/or modify
@@ -10,7 +13,7 @@
 '   GNU General Public License for more details.
 '   You should have received a copy of the GNU General Public License
 '   along with this program.  If not, see <http://www.gnu.org/licenses/>. */
-
+'--------------------------------------------------------------------------
 
 Option Explicit
 
@@ -24,6 +27,13 @@ Dim mm As Double
 Dim ss As Double
 
     FindNumbers inn, CountIntegers, Integers, Decimals, Sign
+
+
+
+
+
+
+
     Select Case CountIntegers
         Case 1: 'D
             dd = Val(Integers) + Decimals
@@ -59,7 +69,12 @@ Dim dd As Double
 Dim mm As Double
 Dim ss As Double
 
-    FindNumbers inn, CountIntegers, Integers, Decimals, Sign
+    FindNumbers inn, CountIntegers, Integers, Decimals, Sign 
+
+
+
+
+
     Select Case CountIntegers
         Case 1: 'D
             dd = Val(Integers) + Decimals
@@ -88,33 +103,36 @@ Dim ss As Double
     ParseLon = Sign * (dd + mm / 60 + ss / 3600)
 End Function
 
-Function FindNumbers(ByVal Text As String, ByRef CountIntegers As Integer, ByRef Integers As String, ByRef Decimals As Double, ByRef Sign As Integer)
+Function FindNumbers(ByVal Text As String, ByRef CountIntegers As Integer, ByRef Integers As String, ByRef Decimals As Double, ByRef Sign As Integer, Optional ByRef LatLon)
 Dim innShort As String
-Dim countDecimals As Integer
 Dim startNumerals As Integer
 Dim endNumerals As Integer
 Dim endDecimals As Integer
 Dim decimalPoint As Integer
 Dim n As Integer
 Dim c As String
+Dim countDecimals As Integer
 Dim hemisphere As Integer
 
     'Init variables
+    countDecimals = 0
+    hemisphere = 0
     CountIntegers = 0
     Integers = ""
     Decimals = 0
     Sign = 0
-    
-    innShort = Replace(Text, "º", "")
-    innShort = Replace(innShort, "°", "")
-    innShort = Replace(innShort, """", "")
-    innShort = Replace(innShort, "'", "")
-    innShort = Replace(innShort, " ", "")
+        
+    innShort = Replace(Text, " ", "")      '0x20
+    innShort = Replace(innShort, "º", "")  '0xBA
+    innShort = Replace(innShort, "°", "")  '0xB0
+    innShort = Replace(innShort, """", "") '0x22
+    innShort = Replace(innShort, "'", "")  '0x27
+
     
     startNumerals = -1
     endNumerals = -1
     decimalPoint = -1
-    
+    endDecimals = -1
     
     '----------------------
     'Find numerals
@@ -141,8 +159,7 @@ Dim hemisphere As Integer
         
 ContinueFor:
     Next n
-    
-    
+
     'End if no decimals after decimalpoint
     If countDecimals = 0 And decimalPoint <> -1 Then Err.Raise 13, , "No numbers after decimalpoint"
     
@@ -155,6 +172,7 @@ ContinueFor:
     '----------------------
     If startNumerals > 1 Then
         c = UCase(Mid(innShort, startNumerals - 1, 1))
+
         If c = "N" Or c = "S" Or c = "-" Or c = "E" Or c = "W" Then
         'Found hemisphere in front of numerals
             If c = "S" Or c = "-" Or c = "W" Then
@@ -162,13 +180,21 @@ ContinueFor:
             Else
                 hemisphere = 1
             End If
+
+            if c = "N" Or c = "S" Then
+                LatLon = "Lat"
+            ElseIf c = "E" or c = "W" Then
+                LatLon = "Lon"
+            End If
         End If
+
     Else
         'Search for hemisphere after numerals
         Dim LastDigit As Integer
         LastDigit = Max(endNumerals, endDecimals)
         If LastDigit < Len(innShort) Then
             c = UCase(Mid(innShort, LastDigit + 1, 1))
+
             If c = "N" Or c = "S" Or c = "E" Or c = "W" Then
             'Found hemisphere after numerals
                 If c = "S" Or c = "W" Then
@@ -176,13 +202,22 @@ ContinueFor:
                 Else
                     hemisphere = 1
                 End If
+
+                if c = "N" Or c = "S" Then
+                    LatLon = "Lat"
+                ElseIf c = "E" or c = "W" Then
+                    LatLon = "Lon"
+                End If
+
             End If
         End If
     End If
+
     If hemisphere = 0 Then
         'Hemisphere not found
         'Northern or Western assumed
         hemisphere = 1
+        LatLon = "Unk"
     End If
     Integers = Mid(innShort, startNumerals, CountIntegers)
     If countDecimals > 0 Then _
@@ -190,6 +225,8 @@ ContinueFor:
     
     Sign = hemisphere
 End Function
+
+
 
 Function DDMM(ByVal inn As Double, ResultType As Integer, Decimals As Integer, lat As Boolean) As Variant
 '***********************************
@@ -265,16 +302,12 @@ Dim ReturnDouble As Boolean
     If lat And Neg Then Direction = "S"
     If Not lat And Not Neg Then Direction = "E"
     If Not lat And Neg Then Direction = "W"
-    
-
 
     If lat Then FormatString1 = "00" _
            Else FormatString1 = "000"
-           
-    
 
 
-Select Case Decimals
+    Select Case Decimals
         Case -1: FormatString2 = "00"
         Case 0: FormatString2 = "00"
         Case 1: FormatString2 = "00.0"
@@ -285,15 +318,12 @@ Select Case Decimals
         Case 6: FormatString2 = "00.000000"
         Case Else: FormatString2 = "00.#"
     End Select
-            
+
     Select Case ResultType
     Case 0: FormatString2 = Mid(FormatString2, 2, Len(FormatString2) - 1) 'Remove leading zero
     Case 1: If Not lat Then FormatString2 = "0" & FormatString2           'If longitude, include three zeros
     Case Else 'No Change in formatstring if Resulttype > 1
     End Select
-    
-
-
 
     
     'Output the result as double or string
@@ -303,11 +333,12 @@ Select Case Decimals
     Else
         'Return a string formatted as given in resulttype
         Select Case ResultType
-            Case 0 To 1: DDMM = Format(dd, FormatString2) & Direction
-            Case 2:      DDMM = Format(dd, FormatString1) & Format(mm, FormatString2) & Direction
-            Case 3:      DDMM = Format(dd, FormatString1) & " " & Format(mm, FormatString2) & Direction
-            Case 4:      DDMM = Format(dd, FormatString1) & Format(mm, "00") & Format(ss, FormatString2) & Direction
-            Case 5:      DDMM = Format(dd, FormatString1) & " " & Format(mm, "00") & " " & Format(ss, FormatString2) & Direction
+            Case 0: DDMM = Format(dd, FormatString2) & Direction
+            Case 1: DDMM = Format(dd, FormatString2) & Direction
+            Case 2: DDMM = Format(dd, FormatString1) & Format(mm, FormatString2) & Direction
+            Case 3: DDMM = Format(dd, FormatString1) & " " & Format(mm, FormatString2) & Direction
+            Case 4: DDMM = Format(dd, FormatString1) & Format(mm, "00") & Format(ss, FormatString2) & Direction
+            Case 5: DDMM = Format(dd, FormatString1) & " " & Format(mm, "00") & " " & Format(ss, FormatString2) & Direction
             Case Else
                 DDMM = "Invalid Resulttype"
                 Exit Function
@@ -320,3 +351,6 @@ Function Max(i1 As Integer, i2 As Integer) As Integer
 End Function
 
 
+#-----------------------------------
+# LatLongParser END
+#-----------------------------------
